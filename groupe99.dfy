@@ -9,37 +9,39 @@ predicate method okRekt(t: rData)
     t.x >= 0 && t.y >= 0 && t.h > 0 && t.w > 0
 }
 
-function method absRekt(t: rData): int
+function absRekt(t: rData): bool 
 {
-  //TODO modifier ca !
-    true
+    okRekt(t)
 }
 
-function boll isNeighbourgs(a: rData, b: rData)
-  assume a != null && b != null
+function isNeighbours(a: rData, b: rData) : bool 
+  requires okRekt(a) && okRekt(b) 
 {
-  (a.x + a.l == b.x) || (a.y + a.w == b.y)
+    (a.x + a.w == b.x) || (a.y + a.w == b.y)
 }
 
-function bool canMerge(a: rData, b: rData)
-  assume okRekt(a) && okRekt(b)
+function canMerge(a: rData, b: rData) : bool 
+  requires okRekt(a) && okRekt(b)
 {
-  isNeighbourgs(a,b) || isNeighbourgs(b,a);
+  ( ( isNeighbours(a,b) || isNeighbours(b,a) ) && (a.w == b.w || a.h == b.h) )
 }
 
-function rData merge(a: rData, b: rData)
-  assume okRekt(a) && okRekt(b)
+function merge(a: rData, b: rData) : rData
+  requires okRekt(a) && okRekt(b) && canMerge(a,b)
 {
-
+    if (a.h == b.h) then Rectangle(min(a.x,b.x), min(a.y,b.y), a.w+b.w, a.h) else Rectangle(min(a.x,b.x), min(a.y,b.y),a.w, a.h+b.h)
 }
 
-class Node(){
+function min(a: int, b:int) : int 
+{
+    if a<b then a else b
+}
 
+class Node
+{
   var InnerR: rData;
   var neightbourgs: array<Node>;
   var isVisited: bool;
-
-
 }
 
 
