@@ -57,13 +57,16 @@ class Couverture {
     var TuillesTab: array<rData>;
     // autres champs de la classe
     var indexArray: int;
+	//Nombre de rectangle 
+    var nbrRekt: int;
 
     // Ceci est votre invariant de représentation.
     // C'est plus simple d'avoir ok() dans les pre et les posts que le le recoper à chaque fois.
     predicate ok()
         reads this, TuillesTab
     {
-        TuillesTab != null
+        TuillesTab != null && nbrRekt >=0
+        
     }
 
     constructor (qs: array<rData>)
@@ -72,6 +75,7 @@ class Couverture {
         ensures ok()
     {
         TuillesTab := qs;
+        nbrRekt:=TuillesTab.Length;
     }
 
     method optimize()
@@ -95,15 +99,17 @@ class Couverture {
         var flag : bool := true;
         while flag
           //invariant indexArray >= TuillesTab.Length && indexArray <= bigArray.Length
-
-          invariant
+          
+          /*invariant
             flag <==> exists i,j :: 0 <= i < j < bigArray.Length ==>
               if okRekt(bigArray[i]) && okRekt(bigArray[j]) then
                 canMerge(bigArray[i], bigArray[j])
               else
-                false
+                false */
+          decreases  flag, nbrRekt
         {
           flag := improve(bigArray);
+
         }
         //replace tuile tab with a small array
         //getting the sizee for the new array
@@ -128,11 +134,15 @@ class Couverture {
           i := i +1;
         }
         TuillesTab := result;
+        assume nbrRekt>=0;
     }
+  
+
 
     method improve(inputArray: array<rData>) returns(retVal: bool)
       modifies inputArray
       modifies this
+      requires nbrRekt >=0
       requires inputArray != null
       //requires ok()
       //requires forall i :: 0 <= i < inputArray.Length ==> okRekt(inputArray[i]) || inputArray[i].x == -1
@@ -141,9 +151,13 @@ class Couverture {
       assume indexArray >= TuillesTab.Length && indexArray <= inputArray.Length;
       retVal := false;
       var i : int := 0;
-      while i < inputArray.Length && retVal == false invariant 0 <= i <= inputArray.Length {
+      while i < inputArray.Length 
+      	invariant 0 <= i <= inputArray.Length 
+      {
         var j : int := i+1;
-        while j < inputArray.Length && retVal == false invariant i+1 <= j <= inputArray.Length {
+        while j < inputArray.Length 
+        	invariant i+1 <= j <= inputArray.Length 
+        {
           if(okRekt(inputArray[i]) && okRekt(inputArray[j]) ){
             if(canMerge(inputArray[i], inputArray[j])){
               assume indexArray >= 0 && indexArray < inputArray.Length;
@@ -151,6 +165,7 @@ class Couverture {
               indexArray := indexArray + 1;
               inputArray[i] := Rectangle(-1,0,0,0);
               inputArray[j] := Rectangle(-1,0,0,0);
+              nbrRekt:=nbrRekt-1;
               retVal := true;
             }//if
           }//if
