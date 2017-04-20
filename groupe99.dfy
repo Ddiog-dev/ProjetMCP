@@ -58,14 +58,15 @@ class Couverture {
     // autres champs de la classe
     var indexArray: int;
 	//Nombre de rectangle 
-    var nbrRekt: int;
+    var nbrRekt: nat;
+    ghost var previousNbrRekt: nat ;
 
     // Ceci est votre invariant de représentation.
     // C'est plus simple d'avoir ok() dans les pre et les posts que le le recoper à chaque fois.
     predicate ok()
         reads this, TuillesTab
     {
-        TuillesTab != null && nbrRekt >=0
+        TuillesTab != null
         
     }
 
@@ -81,6 +82,7 @@ class Couverture {
     method optimize()
         requires ok()
         requires TuillesTab != null
+
         modifies this
         ensures ok()
     {
@@ -97,19 +99,12 @@ class Couverture {
           i := i+1;
         }
         var flag : bool := true;
-        while flag
-          //invariant indexArray >= TuillesTab.Length && indexArray <= bigArray.Length
-          
-          /*invariant
-            flag <==> exists i,j :: 0 <= i < j < bigArray.Length ==>
-              if okRekt(bigArray[i]) && okRekt(bigArray[j]) then
-                canMerge(bigArray[i], bigArray[j])
-              else
-                false */
-          decreases  flag, nbrRekt
+        ghost var temp: nat;
+        while flag || nbrRekt >0
+        //invariant indexArray >= TuillesTab.Length && indexArray <= bigArray.Length  
+          decreases  nbrRekt,flag
         {
           flag := improve(bigArray);
-
         }
         //replace tuile tab with a small array
         //getting the sizee for the new array
@@ -134,16 +129,40 @@ class Couverture {
           i := i +1;
         }
         TuillesTab := result;
-        assume nbrRekt>=0;
     }
   
+ 	method tryMerge(inputArray: array<rData>, i:int, j:int) returns (retVal: bool)
+ 	requires inputArray !=null
+ 	requires 0<=i<inputArray.Length
+ 	requires 0<=j<inputArray.Length
+ 	requires nbrRekt >0
+ 	modifies this
+ 	modifies inputArray
+ 	ensures (previousNbrRekt==nbrRekt+1 || retVal==false)
+ 	ensures ok();
 
+ 	{
+ 		retVal:=false;
+		if(okRekt(inputArray[i]) && okRekt(inputArray[j]) ){
+	        if(canMerge(inputArray[i], inputArray[j])){
+	            assume indexArray >= 0 && indexArray < inputArray.Length;
+	            inputArray[indexArray] := merge(inputArray[i], inputArray[j]);
+	            indexArray := indexArray + 1;
+	            inputArray[i] := Rectangle(-1,0,0,0);
+	            inputArray[j] := Rectangle(-1,0,0,0);
+	            previousNbrRekt:=nbrRekt; 
+	            nbrRekt:=nbrRekt-1;
+	            retVal:=true;
+ 			}
+ 		}	
+ 		assume ok();
+ 	}
 
     method improve(inputArray: array<rData>) returns(retVal: bool)
       modifies inputArray
       modifies this
-      requires nbrRekt >=0
       requires inputArray != null
+      //ensures(previousNbrRekt==nbrRekt+1 || retVal==false)
       //requires ok()
       //requires forall i :: 0 <= i < inputArray.Length ==> okRekt(inputArray[i]) || inputArray[i].x == -1
     {
@@ -151,24 +170,17 @@ class Couverture {
       assume indexArray >= TuillesTab.Length && indexArray <= inputArray.Length;
       retVal := false;
       var i : int := 0;
-      while i < inputArray.Length 
+      var tempBool : bool;
+      while i < inputArray.Length-1 && nbrRekt >0
       	invariant 0 <= i <= inputArray.Length 
       {
         var j : int := i+1;
-        while j < inputArray.Length 
+        while j < inputArray.Length && nbrRekt >0
         	invariant i+1 <= j <= inputArray.Length 
+        	//decreases retVal, nbrRekt
         {
-          if(okRekt(inputArray[i]) && okRekt(inputArray[j]) ){
-            if(canMerge(inputArray[i], inputArray[j])){
-              assume indexArray >= 0 && indexArray < inputArray.Length;
-              inputArray[indexArray] := merge(inputArray[i], inputArray[j]);
-              indexArray := indexArray + 1;
-              inputArray[i] := Rectangle(-1,0,0,0);
-              inputArray[j] := Rectangle(-1,0,0,0);
-              nbrRekt:=nbrRekt-1;
-              retVal := true;
-            }//if
-          }//if
+          tempBool:=tryMerge( inputArray,i,j);
+          if tempBool { retVal := true;}
           j:= j+1;
         }//forall
         i:= i+1;
@@ -200,5 +212,5 @@ method Main()
 
     var m := new Couverture(g);
     m.optimize();
-    m.dump();
+    //m.dump();
 }
