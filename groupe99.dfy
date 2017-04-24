@@ -78,10 +78,33 @@ class Couverture {
         TuillesTab := qs;
         nbrRekt:=TuillesTab.Length;
     }
+    method contains( a: rData) returns(retVal:bool)
+    requires TuillesTab!=null
+    requires ok()
+    requires okRekt(a)
+    {
+      retVal:=false;
+      var i: int :=TuillesTab.Length-1 ;
+      var compRekt: rData;
+      while i>=0 
+      invariant i <TuillesTab.Length
+      invariant TuillesTab !=null
+      decreases i
+      {
+        compRekt:= TuillesTab[i];
+        if compRekt.x<= a.x <=compRekt.x+compRekt.w &&  compRekt.y<= a.y <=compRekt.y+compRekt.h
+        {
+          retVal:=true;
+        }
+        i:=i-1;
+      }
+
+    }
 
     method optimize()
         requires ok()
         requires TuillesTab != null
+
         modifies this
         ensures ok()
     {
@@ -105,7 +128,7 @@ class Couverture {
         {
           flag := improve(bigArray);
           nbrBoucl:= nbrBoucl-1;
-        }
+      	}
         //replace tuile tab with a small array
         //getting the sizee for the new array
         var sizeNew : int := 0;
@@ -136,13 +159,16 @@ class Couverture {
       modifies inputArray
       modifies this
       requires inputArray != null
-      decreases nbrRekt
+      //ensures(previousNbrRekt==nbrRekt+1 || retVal==false)
+      //requires ok()
+      //requires forall i :: 0 <= i < inputArray.Length ==> okRekt(inputArray[i]) || inputArray[i].x == -1
     {
       assume ok();
       assume indexArray >= TuillesTab.Length && indexArray <= inputArray.Length;
       retVal := false;
       var i : int := 0;
-      while i < inputArray.Length && nbrRekt >0
+      var tempBool : bool;
+      while i < inputArray.Length-1 && nbrRekt >0
       	invariant 0 <= i <= inputArray.Length 
       {
         var j : int := i+1;
@@ -151,6 +177,7 @@ class Couverture {
         	//decreases  nbrRekt
         {
           retVal:=tryMerge( inputArray,i,j);
+        
           j:= j+1;
         }//forall
         i:= i+1;
@@ -200,8 +227,8 @@ class Couverture {
         }
         print " ]\n";
     }
-}
 
+}
 method Main()
 {
     // Vous devez écrire ici trois tests de votre méthode optimize
