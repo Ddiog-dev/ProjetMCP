@@ -249,8 +249,31 @@ method Main()
     var g := new rData[3];
     g[1], g[2] := Rectangle(1,1,1,1), Rectangle(2,1,1,1);
 
+    //simple basic test
     var m := new Couverture(g);
     m.optimize();
+    print "\n";
     print m;
     m.dump();
+    print "\n";
+
+    //testing a complete rectangle
+    var h := new rData[6];
+    h[0], h[1], h[2], h[3], h[4], h[5] := Rectangle(1,1,2,1), Rectangle(3,1,1,2), Rectangle(1,2,1,1), Rectangle(1,3,1,1), Rectangle(2,2,1,2), Rectangle(3,3,1,1);
+    var i := new Couverture(h);
+    i.optimize();
+    print "\n";
+    print i;
+    i.dump();
+    print "\n";
+
+    //testing with a "holled" rectangle
+    var j := new rData[5];
+    j[0], j[1], j[2], j[3], j[4] := Rectangle(1,1,2,1), Rectangle(3,1,1,2), Rectangle(1,3,1,1), Rectangle(2,2,1,2), Rectangle(3,3,1,1);
+    var k := new Couverture(j);
+    k.optimize();
+    print "\n";
+    print k;
+    k.dump();
+    print "\n";
 }
