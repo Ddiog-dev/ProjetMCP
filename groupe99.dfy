@@ -105,7 +105,6 @@ class Couverture {
     method optimize()
         requires ok()
         requires TuillesTab != null
-
         modifies this
         ensures ok()
     {
@@ -116,6 +115,7 @@ class Couverture {
           invariant TuillesTab != null
           invariant 0 <= i <= TuillesTab.Length
           invariant TuillesTab.Length <= bigArray.Length
+          invariant TuillesTab.Length<= indexArray <= bigArray.Length
           invariant forall j :: 0 <= j < i ==> bigArray[j] == TuillesTab[j]
         {
           bigArray[i] := TuillesTab[i];
@@ -124,8 +124,10 @@ class Couverture {
         var flag : bool := true;
         var nbrBoucl: int := bigArray.Length*2; 
         while flag && nbrRekt >0 && nbrBoucl>0
-          	//invariant 0<=nbrRekt && exists i,j :: 0<=i<bigArray.Length&& 0<=j<bigArray.Length && (canMerge(bigArray[i],bigArray[j]) || flag==false || flag==true )
-       		decreases nbrBoucl
+          decreases nbrBoucl
+          invariant bigArray!=null
+          invariant TuillesTab!=null
+          invariant TuillesTab.Length<= indexArray <= bigArray.Length
         {
           flag := improve(bigArray);
           nbrBoucl:= nbrBoucl-1;
@@ -144,11 +146,13 @@ class Couverture {
         var result := new rData[sizeNew];
         var count : int := 0;
         i := 0;
-        while i < bigArray.Length 
+        while i < bigArray.Length && count <sizeNew
+        invariant 0<=i<=bigArray.Length
+        invariant 0<= count <= result.Length;
         {
           if bigArray[i].x != -1 {
-            assume count >= 0 && count < result.Length;
-            result[count] := bigArray[i];
+            result[count] :=
+             bigArray[i];
             count := count +1;
           }
           i := i +1;
@@ -160,21 +164,28 @@ class Couverture {
       modifies inputArray
       modifies this
       requires inputArray != null
+      requires TuillesTab!=null
+      requires TuillesTab.Length<=indexArray <= inputArray.Length
       //ensures(previousNbrRekt==nbrRekt+1 || retVal==false)
-      //requires ok()
+      requires ok()
+      ensures TuillesTab!=null
+     ensures TuillesTab.Length<=indexArray <= inputArray.Length
       //requires forall i :: 0 <= i < inputArray.Length ==> okRekt(inputArray[i]) || inputArray[i].x == -1
     {
-      assume ok();
-      assume indexArray >= TuillesTab.Length && indexArray <= inputArray.Length;
       retVal := false;
       var i : int := 0;
       var tempBool : bool;
       while i < inputArray.Length-1 && nbrRekt >0
-      	invariant 0 <= i <= inputArray.Length 
+      invariant TuillesTab!=null
+      invariant TuillesTab.Length<= indexArray <=inputArray.Length
+      invariant 0 <= i <= inputArray.Length 
       {
         var j : int := i+1;
         while j < inputArray.Length && nbrRekt >0
-        	invariant i+1 <= j <= inputArray.Length 
+        	invariant i+1 <= j <= inputArray.Length
+          invariant TuillesTab!=null
+          invariant TuillesTab.Length<= indexArray <= inputArray.Length
+          
         	//decreases  nbrRekt
         {
           retVal:=tryMerge( inputArray,i,j);
@@ -186,21 +197,24 @@ class Couverture {
     }//improve
 
     method tryMerge(inputArray: array<rData>, i:int, j:int) returns (retVal: bool)
+    requires TuillesTab!=null
  	requires inputArray !=null
  	requires 0<=i<inputArray.Length
  	requires 0<=j<inputArray.Length
  	requires nbrRekt >0
  	modifies this
  	modifies inputArray
+  requires 0<=TuillesTab.Length<= indexArray <= inputArray.Length
  	ensures (previousNbrRekt==nbrRekt+1 || retVal==false)
- 	ensures ok();
+  ensures TuillesTab!=null
+  ensures TuillesTab.Length<= indexArray <= inputArray.Length
  	decreases nbrRekt
 
  	{
  		retVal:=false;
-		if(okRekt(inputArray[i]) && okRekt(inputArray[j]) ){
+		if(okRekt(inputArray[i]) && okRekt(inputArray[j]) && indexArray<inputArray.Length){
 	        if(canMerge(inputArray[i], inputArray[j])){
-	            assume indexArray >= 0 && indexArray < inputArray.Length;
+	            //assume indexArray >= 0 && indexArray < inputArray.Length;
 	            inputArray[indexArray] := merge(inputArray[i], inputArray[j]);
 	            indexArray := indexArray + 1;
 	            inputArray[i] := Rectangle(-1,0,0,0);
@@ -209,8 +223,7 @@ class Couverture {
 	            nbrRekt:=nbrRekt-1;
 	            retVal:=true;
  			}
- 		}	
- 		assume ok();
+ 		}
  	}
 
     method dump()
@@ -238,5 +251,6 @@ method Main()
 
     var m := new Couverture(g);
     m.optimize();
-    //m.dump();
+    print m;
+    m.dump();
 }
