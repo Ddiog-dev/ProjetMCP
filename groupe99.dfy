@@ -1,3 +1,4 @@
+
 // Le type de données pour les rectangles.
 // Remplacez-le par votre définition de rectangle.
 // Vous pouvez en introduire d'autres si vous le jugez pertinent.
