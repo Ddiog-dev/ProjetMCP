@@ -89,6 +89,7 @@ class Couverture {
     {
         TuillesTab := qs;
         nbrRekt:=TuillesTab.Length;// On initialise nbrRekt au nombre rectangle recu en paramètre
+        previousNbrRekt:=nbrRekt+1;
     }
     /*
       Vérifie si le point supérieur gauche est contenu dans la couverture
@@ -98,6 +99,7 @@ class Couverture {
     requires TuillesTab!=null
     requires ok()
     requires okRekt(a)
+    ensures ok()
     {
       retVal:=false;
       var i: int :=TuillesTab.Length-1 ;
@@ -185,6 +187,7 @@ class Couverture {
       requires ok()
       ensures TuillesTab!=null
      ensures TuillesTab.Length<=indexArray <= inputArray.Length
+     ensures (previousNbrRekt==nbrRekt+1 || retVal==false)
     {
       retVal := false;
       var i : int := 0;
@@ -193,16 +196,17 @@ class Couverture {
       invariant TuillesTab!=null
       invariant TuillesTab.Length<= indexArray <=inputArray.Length
       invariant 0 <= i <= inputArray.Length 
+      invariant (previousNbrRekt==nbrRekt+1 || retVal==false)
       {
         var j : int := i+1;
         while j < inputArray.Length && nbrRekt >0
         	invariant i+1 <= j <= inputArray.Length
           invariant TuillesTab!=null
           invariant TuillesTab.Length<= indexArray <= inputArray.Length
-          
-        
+          invariant (previousNbrRekt==nbrRekt+1 || retVal==false)
         {
           retVal:=tryMerge( inputArray,i,j); // on essaie de fusionner 2 rectangles
+          if (!retVal){ previousNbrRekt:=nbrRekt;}
         
           j:= j+1;
         }//forall
